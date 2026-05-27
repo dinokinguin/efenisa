@@ -2,685 +2,202 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ses Kutusu Yapım Simülatörü</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ses Kutusu</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Ses Kutusu">
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #090a0f; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #11131e; }
-        ::-webkit-scrollbar-thumb { background: #2b304a; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #3f466e; }
-        #sim-grid { scrollbar-width: thin; }
+        body {
+            font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            background-color: #0d0e12;
+        }
+        html, body { position: fixed; overflow: hidden; width: 100%; height: 100%; }
+        .scrollable { overflow-y: auto; height: calc(100% - 140px); -webkit-overflow-scrolling: touch; }
+        @keyframes pulse-wave { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }
+        .wave-bar { animation: pulse-wave 1.2s ease-in-out infinite; }
+        .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.30s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.45s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.60s; }
     </style>
 </head>
-<body class="text-slate-100 min-h-screen flex flex-col">
+<body class="text-white flex flex-col justify-between h-full">
 
     <!-- HEADER -->
-    <header class="border-b border-slate-800/80 bg-[#0d0e16]/80 backdrop-blur-md px-6 py-4 sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="bg-gradient-to-tr from-pink-500 to-rose-500 p-2.5 rounded-xl shadow-lg shadow-pink-500/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                    </svg>
-                </div>
-                <div>
-                    <h1 class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-pink-400 to-rose-400 bg-clip-text text-transparent">Ses Kutusu Yapıcısı</h1>
-                    <p class="text-xs text-slate-400">Sevgiline özel uygulamanı tasarla, test et ve tek tıkla kodunu al!</p>
-                </div>
+    <div class="px-6 pt-12 pb-4 border-b border-gray-800 bg-[#16181f]/80 backdrop-blur-md shrink-0">
+        <div class="flex justify-between items-center">
+            <div>
+                <p class="text-xs text-gray-400 uppercase tracking-widest font-semibold">Sevgilime Ozel</p>
+                <h1 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-pink-500 to-rose-400 bg-clip-text text-transparent">Ses Kutusu ❤️</h1>
             </div>
-            <div class="flex items-center space-x-2 bg-slate-800/40 p-1.5 rounded-xl border border-slate-700/50">
-                <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Vercel & PWA Uyumlu
-                </span>
+            <div id="audio-wave" class="hidden items-end space-x-1 h-8">
+                <div class="w-1 h-6 bg-rose-500 rounded-full wave-bar"></div>
+                <div class="w-1 h-8 bg-rose-400 rounded-full wave-bar"></div>
+                <div class="w-1.5 h-10 bg-pink-500 rounded-full wave-bar"></div>
+                <div class="w-1 h-8 bg-rose-400 rounded-full wave-bar"></div>
+                <div class="w-1 h-6 bg-rose-500 rounded-full wave-bar"></div>
             </div>
         </div>
-    </header>
+    </div>
 
-    <!-- MAIN LAYOUT -->
-    <main class="flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+    <!-- SES KARTLARI -->
+    <div class="scrollable px-4 py-6 grid grid-cols-2 gap-4" id="buttons-container"></div>
 
-        <!-- LEFT: PHONE SIMULATOR -->
-        <section class="lg:col-span-5 flex flex-col items-center justify-center">
-            <h2 class="text-sm font-bold tracking-wider text-slate-400 uppercase mb-4 flex items-center gap-2">
-                <span class="flex h-2 w-2 relative">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
-                </span>
-                Canlı Telefon Önizlemesi
-            </h2>
+    <!-- ALT BAR -->
+    <div class="px-6 py-4 bg-[#16181f] border-t border-gray-800 flex justify-between items-center z-10 shrink-0">
+        <div class="text-xs text-gray-500">Yapimci: <span class="font-semibold text-gray-400">Efe</span></div>
+        <button onclick="toggleAdminPanel()" class="w-10 h-10 bg-gray-800 hover:bg-gray-700 active:scale-90 transition rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.01 12a4.237 4.237 0 000-8.474 4.237 4.237 0 000 8.474zM2.105 20.316A9.895 9.895 0 0112 10.421a9.895 9.895 0 019.895 9.895" />
+            </svg>
+        </button>
+    </div>
 
-            <!-- MOCK IPHONE -->
-            <div class="relative w-[340px] h-[680px] bg-[#1a1c29] rounded-[48px] p-3.5 shadow-2xl border-4 border-slate-700/60 ring-1 ring-slate-800 flex flex-col justify-between overflow-hidden">
-                <!-- Dynamic Island -->
-                <div class="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-6 bg-black rounded-full z-50 flex items-center justify-between px-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-blue-900/40"></div>
-                    <div class="w-2 h-2 rounded-full bg-slate-900"></div>
-                </div>
-
-                <!-- Screen -->
-                <div class="w-full h-full bg-[#0d0e12] rounded-[36px] overflow-hidden flex flex-col justify-between relative select-none">
-
-                    <!-- Sim Header -->
-                    <div class="px-5 pt-9 pb-3 border-b border-slate-800 bg-[#16181f]/90 backdrop-blur-md z-10 shrink-0">
-                        <div class="flex justify-between items-end">
-                            <div>
-                                <p class="text-[9px] text-pink-500/80 uppercase tracking-widest font-extrabold">Sevgilime Özel</p>
-                                <h3 class="text-xl font-bold tracking-tight bg-gradient-to-r from-pink-400 to-rose-400 bg-clip-text text-transparent">Ses Kutusu ❤️</h3>
-                            </div>
-                            <div id="sim-wave" class="hidden items-end space-x-0.5 h-6">
-                                <div class="w-0.5 h-4 bg-rose-500 rounded-full animate-bounce" style="animation-delay:0s"></div>
-                                <div class="w-0.5 h-5 bg-rose-400 rounded-full animate-bounce" style="animation-delay:0.15s"></div>
-                                <div class="w-0.5 h-6 bg-pink-500 rounded-full animate-bounce" style="animation-delay:0.3s"></div>
-                                <div class="w-0.5 h-5 bg-rose-400 rounded-full animate-bounce" style="animation-delay:0.45s"></div>
-                                <div class="w-0.5 h-4 bg-rose-500 rounded-full animate-bounce" style="animation-delay:0.6s"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Button Grid -->
-                    <div id="sim-grid" class="flex-1 overflow-y-auto px-4 py-4 grid grid-cols-2 gap-3 content-start"></div>
-
-                    <!-- Sim Footer -->
-                    <div class="px-5 py-4 bg-[#16181f] border-t border-slate-800/80 flex justify-between items-center z-10 text-[10px] shrink-0">
-                        <span class="text-slate-500">Yapımcı: <span class="font-bold text-slate-400">Efe</span></span>
-                        <div class="flex items-center space-x-2">
-                            <span class="text-pink-400 font-medium">Yönetici Paneli</span>
-                            <button onclick="toggleSimAdmin()" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-full flex items-center justify-center transition active:scale-90">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.01 12a4.237 4.237 0 000-8.474 4.237 4.237 0 000 8.474zM2.105 20.316A9.895 9.895 0 0112 10.421a9.895 9.895 0 019.895 9.895" />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Sim Admin Modal -->
-                    <div id="sim-admin-modal" class="absolute inset-0 bg-black/90 backdrop-blur-sm flex items-end justify-center transition-transform duration-300 translate-y-full z-20">
-                        <div class="bg-[#1c1e27] w-full rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto pb-8">
-                            <div class="flex justify-between items-center mb-4">
-                                <h4 class="text-sm font-bold text-pink-500">Sesleri Düzenle (Simülasyon)</h4>
-                                <button onclick="toggleSimAdmin()" class="text-xs text-slate-400 hover:text-white">Kapat</button>
-                            </div>
-                            <p class="text-[11px] text-slate-400 mb-4 bg-slate-800/30 p-2 rounded-lg border border-slate-700/20">Bu panel sevgilinin telefonunda da aynı bu şekilde görünecek!</p>
-                            <div id="sim-admin-list" class="space-y-1.5"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Home Indicator -->
-                <div class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/40 rounded-full"></div>
+    <!-- ADMIN MODAL -->
+    <div id="admin-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end justify-center transition-all duration-300 translate-y-full z-50">
+        <div class="bg-[#1c1e27] w-full rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto pb-12">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-pink-500">Sesleri Duzenle</h2>
+                <button onclick="toggleAdminPanel()" class="text-gray-400 hover:text-white font-medium">Kapat</button>
             </div>
-
-            <p class="text-xs text-slate-400 mt-3 text-center max-w-[340px] italic">
-                💡 Simülatördeki butonlara tıklayarak telefonun o sesi nasıl seslendireceğini test edebilirsin!
-            </p>
-        </section>
-
-        <!-- RIGHT: CONTROLS -->
-        <section class="lg:col-span-7 space-y-6">
-
-            <!-- TABS -->
-            <div class="bg-[#11131e] rounded-2xl border border-slate-800/80 p-1 flex gap-1">
-                <button onclick="switchTab('tab-editor')" id="btn-tab-editor" class="flex-1 py-3 text-sm font-semibold rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white transition-all shadow-lg shadow-pink-500/10">
-                    🛠️ Sesleri Özelleştir
-                </button>
-                <button onclick="switchTab('tab-code')" id="btn-tab-code" class="flex-1 py-3 text-sm font-semibold rounded-xl text-slate-400 hover:text-white transition-all">
-                    💻 Kod Al
-                </button>
-                <button onclick="switchTab('tab-deploy')" id="btn-tab-deploy" class="flex-1 py-3 text-sm font-semibold rounded-xl text-slate-400 hover:text-white transition-all">
-                    🚀 Nasıl Yüklenir?
-                </button>
+            <div class="bg-[#252836] p-4 rounded-2xl mb-6 space-y-3">
+                <h3 class="text-sm font-semibold text-gray-300">Yeni Ses Karti Ekle</h3>
+                <div class="grid grid-cols-4 gap-2">
+                    <input id="new-emoji" type="text" placeholder="Emoji" class="col-span-1 bg-[#16181f] border border-gray-700 rounded-xl p-3 text-center text-xl focus:outline-none focus:border-pink-500">
+                    <input id="new-title" type="text" placeholder="Buton Basligi" class="col-span-3 bg-[#16181f] border border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:border-pink-500">
+                </div>
+                <input id="new-text" type="text" placeholder="Soylenecek Soz" class="w-full bg-[#16181f] border border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:border-pink-500">
+                <select id="new-color" class="w-full bg-[#16181f] border border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:border-pink-500">
+                    <option value="from-pink-500 to-rose-500">Ask Pembesi</option>
+                    <option value="from-violet-600 to-indigo-600">Gece Mavisi</option>
+                    <option value="from-amber-500 to-orange-500">Enerjik Turuncu</option>
+                    <option value="from-emerald-500 to-teal-500">Huzur Yesili</option>
+                    <option value="from-red-600 to-rose-700">Canli Kirmizi</option>
+                </select>
+                <button onclick="addNewSound()" class="w-full bg-pink-500 hover:bg-pink-600 active:scale-95 transition py-3 rounded-xl font-semibold text-sm">Listeye Ekle</button>
             </div>
-
-            <!-- TAB 1: EDITOR -->
-            <div id="tab-editor" class="space-y-6">
-                <div class="bg-[#11131e] rounded-2xl border border-slate-800/80 p-5 md:p-6 space-y-4">
-                    <div>
-                        <h3 class="text-base font-bold text-white mb-1">Yeni Ses Kartı Ekle</h3>
-                        <p class="text-xs text-slate-400">Uygulamaya yeni bir emoji butonu ve ses cümlesi ekle.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                        <div class="md:col-span-3">
-                            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Emoji</label>
-                            <input id="input-emoji" type="text" value="💖" class="w-full bg-[#181a26] border border-slate-700/60 rounded-xl px-3 py-2.5 text-center text-xl focus:outline-none focus:border-pink-500 transition">
-                        </div>
-                        <div class="md:col-span-9">
-                            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Buton Başlığı</label>
-                            <input id="input-title" type="text" placeholder="Örn: Seni Özledim" class="w-full bg-[#181a26] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-pink-500 transition text-white">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-400 mb-1.5">Söylenecek Cümle (Türkçe)</label>
-                        <input id="input-text" type="text" placeholder="Butona basınca telefonun Türkçe olarak seslendireceği söz" class="w-full bg-[#181a26] border border-slate-700/60 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-pink-500 transition text-white">
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-400 mb-1.5">Renk Gradiyenti</label>
-                            <select id="input-color" class="w-full bg-[#181a26] border border-slate-700/60 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-pink-500 transition text-white">
-                                <option value="from-pink-500 to-rose-500">Aşk Pembesi</option>
-                                <option value="from-violet-600 to-indigo-600">Gece Mavisi</option>
-                                <option value="from-amber-500 to-orange-500">Enerjik Turuncu</option>
-                                <option value="from-emerald-500 to-teal-500">Huzur Yeşili</option>
-                                <option value="from-red-600 to-rose-700">Canlı Kırmızı</option>
-                            </select>
-                        </div>
-                        <div class="flex items-end">
-                            <button onclick="handleAddButton()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 active:scale-95 transition py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-pink-500/20">
-                                ➕ Simülatöre Ekle
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Toast -->
-                <div id="custom-toast" class="hidden p-3.5 rounded-xl text-xs flex items-center justify-between">
-                    <span id="toast-message"></span>
-                    <button onclick="hideToast()" class="ml-3 opacity-60 hover:opacity-100">✕</button>
-                </div>
-
-                <!-- Presets -->
-                <div class="bg-[#11131e] rounded-2xl border border-slate-800/80 p-5 md:p-6">
-                    <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-1.5">
-                        ✨ Hazır Ses Şablonları <span class="text-xs font-normal text-slate-400">(Tıklayıp Listene Ekle)</span>
-                    </h3>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="addPreset('🍔','Açım','Aşkım inanılmaz derecede acıktım, ne yesek?','from-amber-500 to-orange-500')" class="bg-slate-800 hover:bg-slate-700 text-xs py-1.5 px-3 rounded-xl border border-slate-700/50 transition">🍔 Açım</button>
-                        <button onclick="addPreset('😘','Öpücük','Sana kocaman ve sulu bir öpücük gönderiyorum!','from-pink-500 to-rose-500')" class="bg-slate-800 hover:bg-slate-700 text-xs py-1.5 px-3 rounded-xl border border-slate-700/50 transition">😘 Öpücük</button>
-                        <button onclick="addPreset('😡','Trip','Şu an trip atıyorum, sakın konuşma!','from-red-600 to-rose-700')" class="bg-slate-800 hover:bg-slate-700 text-xs py-1.5 px-3 rounded-xl border border-slate-700/50 transition">😡 Trip</button>
-                        <button onclick="addPreset('☕','Kahve Saati','Kahve içelim mi aşkım lütfen?','from-emerald-500 to-teal-500')" class="bg-slate-800 hover:bg-slate-700 text-xs py-1.5 px-3 rounded-xl border border-slate-700/50 transition">☕ Kahve Saati</button>
-                        <button onclick="addPreset('😴','Uykum Var','Gözlerim kapanıyor, iyi uykular aşkım.','from-violet-600 to-indigo-600')" class="bg-slate-800 hover:bg-slate-700 text-xs py-1.5 px-3 rounded-xl border border-slate-700/50 transition">😴 Uykum Var</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 2: CODE -->
-            <div id="tab-code" class="hidden space-y-4">
-                <div class="bg-[#11131e] rounded-2xl border border-slate-800/80 p-5 md:p-6 space-y-4">
-                    <div>
-                        <h3 class="text-base font-bold text-white mb-1">Özelleştirilmiş index.html Kodun</h3>
-                        <p class="text-xs text-slate-400">Aşağıdaki kod, yukarıda tasarladığın ses butonlarına göre otomatik güncellenir. Kopyalayıp GitHub'a yükle.</p>
-                    </div>
-                    <div class="relative">
-                        <textarea id="code-output" readonly class="w-full h-80 bg-[#08090f] border border-slate-800 rounded-xl p-4 text-xs font-mono text-pink-400/90 focus:outline-none resize-none"></textarea>
-                        <div class="absolute bottom-4 right-4">
-                            <button onclick="copyGeneratedCode()" class="flex items-center space-x-1.5 bg-pink-500 hover:bg-pink-600 active:scale-95 text-white text-xs font-bold py-2 px-4 rounded-xl shadow-lg shadow-pink-500/20 transition">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                                </svg>
-                                <span>Kodu Kopyala</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="flex items-center space-x-3 bg-pink-500/10 border border-pink-500/20 rounded-xl p-4 text-xs text-pink-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p>Kodu kopyaladıktan sonra <strong>"Nasıl Yüklenir?"</strong> sekmesindeki talimatları takip et!</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 3: DEPLOY GUIDE -->
-            <div id="tab-deploy" class="hidden space-y-4">
-                <div class="bg-[#11131e] rounded-2xl border border-slate-800/80 p-5 md:p-6 space-y-6">
-                    <div>
-                        <h3 class="text-base font-bold text-white mb-1">Adım Adım İnternete Yükleme (Vercel)</h3>
-                        <p class="text-xs text-slate-400">Mac veya kablo gerekmeden bu uygulamayı sevgilinin telefonuna kalıcı olarak kurma rehberi.</p>
-                    </div>
-                    <div class="space-y-5">
-                        <div class="flex items-start space-x-3">
-                            <div class="bg-pink-500/10 text-pink-400 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">1</div>
-                            <div>
-                                <h4 class="text-sm font-semibold text-slate-200">GitHub Deposu Aç</h4>
-                                <p class="text-xs text-slate-400 mt-1"><a href="https://github.com" target="_blank" class="text-pink-400 underline">github.com</a> adresine git. <strong>"New"</strong> butonuna bas. Depo adına <code class="bg-[#181a26] text-pink-300 px-1 py-0.5 rounded text-[11px]">ses-kutusu</code> yazıp <strong>"Create Repository"</strong> de.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start space-x-3">
-                            <div class="bg-pink-500/10 text-pink-400 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">2</div>
-                            <div>
-                                <h4 class="text-sm font-semibold text-slate-200">Kodu Dosya Olarak Yapıştır</h4>
-                                <p class="text-xs text-slate-400 mt-1"><strong>"creating a new file"</strong> linkine tıkla. Dosya adını <strong class="text-slate-200">index.html</strong> yap. Kodu yapıştır ve <strong>"Commit changes"</strong> butonuna bas.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start space-x-3">
-                            <div class="bg-pink-500/10 text-pink-400 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">3</div>
-                            <div>
-                                <h4 class="text-sm font-semibold text-slate-200">Vercel ile Tek Tıkla Yayınla</h4>
-                                <p class="text-xs text-slate-400 mt-1"><a href="https://vercel.com" target="_blank" class="text-pink-400 underline">vercel.com</a> adresine git. GitHub hesabınla giriş yap. <strong>"Add New → Project"</strong> butonuna bas. <code class="bg-[#181a26] text-pink-300 px-1 py-0.5 rounded text-[11px]">ses-kutusu</code> deposunu bul, <strong>"Import"</strong> ve <strong>"Deploy"</strong> butonuna bas. 15 saniyede yayında!</p>
-                            </div>
-                        </div>
-                        <div class="flex items-start space-x-3">
-                            <div class="bg-pink-500/10 text-pink-400 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5">4</div>
-                            <div>
-                                <h4 class="text-sm font-semibold text-slate-200">Sevgilinin Telefonuna Kur</h4>
-                                <p class="text-xs text-slate-400 mt-1">Vercel'in verdiği linki sevgilinin telefonunda <strong>Safari</strong> ile aç. Alt menüden <strong>Paylaş → Ana Ekrana Ekle</strong> seçeneğini seç. Uygulama App Store'dan yüklenmiş gibi görünecek!</p>
-                            </div>
-                        </div>
-                    </div>
-                    <!-- Debug Rehberi -->
-                    <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 space-y-2">
-                        <h4 class="text-xs font-bold text-amber-400 flex items-center gap-1.5">🔍 Hata Nasıl Kontrol Edilir?</h4>
-                        <div class="text-xs text-amber-300/80 space-y-1.5">
-                            <p><strong>Masaüstü Chrome/Edge:</strong> F12 tuşuna bas → "Console" sekmesine tıkla. Kırmızı yazılar varsa hata var demektir.</p>
-                            <p><strong>iPhone Safari:</strong> Ayarlar → Safari → Gelişmiş → Web Denetçisi'ni aç. Mac'te Safari'de Geliştir → [telefon adın] → Denetle seçeneğine bas.</p>
-                            <p><strong>Android Chrome:</strong> Adres çubuğuna <code class="bg-black/30 px-1 rounded">chrome://inspect</code> yaz ve cihazını seç.</p>
-                            <p><strong>Vercel Hataları:</strong> Vercel panelinde "Deployments" sekmesine tıkla. Kırmızı ise "View Logs" ile nedeni gör.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </section>
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="border-t border-slate-900 bg-[#06070a] px-6 py-4 text-center text-xs text-slate-500">
-        Efe için sevgiyle hazırlandı. | Tarayıcı konuşma motoru Türkçe sesleri destekler.
-    </footer>
+            <h3 class="text-sm font-semibold mb-3 text-gray-300">Mevcut Butonlari Sil</h3>
+            <div id="admin-list" class="space-y-2"></div>
+        </div>
+    </div>
 
     <script>
-        // ============================================================
-        // STATE
-        // ============================================================
-        let currentSounds = [
-            { id: "1", emoji: "❤️", title: "Efeyi Seviyorum",  text: "Efeyi dünyalar kadar çok seviyorum!",       color: "from-pink-500 to-rose-500"   },
-            { id: "2", emoji: "🥱", title: "Çok Yorgunum",     text: "Aşkım bugün gerçekten çok yorgunum.",       color: "from-violet-600 to-indigo-600"},
-            { id: "3", emoji: "😊", title: "Mutluyum",         text: "Şu an içim kıpır kıpır, çok mutluyum!",    color: "from-amber-500 to-orange-500" },
-            { id: "4", emoji: "🥺", title: "Seni Özledim",     text: "Çok özledim seni, hemen gelsen keşke.",     color: "from-red-600 to-rose-700"     }
-        ];
+        var defaultSounds = [
+    {
+        "id": "1",
+        "emoji": "❤️",
+        "title": "Efeyi Seviyorum",
+        "text": "Efeyi dünyalar kadar çok seviyorum!",
+        "color": "from-pink-500 to-rose-500"
+    },
+    {
+        "id": "2",
+        "emoji": "🥱",
+        "title": "Çok Yorgunum",
+        "text": "Aşkım bugün gerçekten çok yorgunum.",
+        "color": "from-violet-600 to-indigo-600"
+    },
+    {
+        "id": "3",
+        "emoji": "😊",
+        "title": "Mutluyum",
+        "text": "Şu an içim kıpır kıpır, çok mutluyum!",
+        "color": "from-amber-500 to-orange-500"
+    },
+    {
+        "id": "4",
+        "emoji": "🥺",
+        "title": "Seni Özledim",
+        "text": "Çok özledim seni, hemen gelsen keşke.",
+        "color": "from-red-600 to-rose-700"
+    }
+];
+        var sounds = [];
 
-        // ============================================================
-        // SPEECH SYNTHESIS
-        // ============================================================
-        // Voices may load async — prime them
-        if (window.speechSynthesis) {
-            window.speechSynthesis.getVoices();
-            window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-        }
-
-        function speak(text) {
-            if (!window.speechSynthesis) {
-                alert("Tarayıcın konuşma sentezini desteklemiyor.");
-                return;
+        window.onload = function() {
+            try {
+                var saved = localStorage.getItem("ses_kutusu_sounds");
+                sounds = saved ? JSON.parse(saved) : defaultSounds.slice();
+            } catch(e) {
+                sounds = defaultSounds.slice();
             }
-            window.speechSynthesis.cancel();
+            renderButtons();
+            if (window.speechSynthesis) {
+                window.speechSynthesis.getVoices();
+                window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };
+            }
+        };
 
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang  = 'tr-TR';
-            utterance.rate  = 1.0;
-            utterance.pitch = 1.1;
+        function save() { localStorage.setItem("ses_kutusu_sounds", JSON.stringify(sounds)); }
 
-            const voices  = window.speechSynthesis.getVoices();
-            const trVoice = voices.find(v => v.lang && v.lang.startsWith('tr'));
-            if (trVoice) utterance.voice = trVoice;
-
-            const wave = document.getElementById('sim-wave');
-            utterance.onstart = () => { wave.classList.remove('hidden'); wave.classList.add('flex'); };
-            utterance.onend   = () => { wave.classList.add('hidden');    wave.classList.remove('flex'); };
-            utterance.onerror = () => { wave.classList.add('hidden');    wave.classList.remove('flex'); };
-
-            window.speechSynthesis.speak(utterance);
+        function escHtml(s) {
+            return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
         }
 
-        // ============================================================
-        // RENDER SIMULATOR
-        // ============================================================
-        function renderSimulator() {
-            // --- Button grid ---
-            const grid = document.getElementById('sim-grid');
-            grid.innerHTML = '';
-
-            currentSounds.forEach(sound => {
-                const btn = document.createElement('button');
-                btn.className = 'bg-gradient-to-br ' + sound.color +
-                    ' p-4 rounded-xl flex flex-col items-center justify-center text-center shadow-md active:scale-95 transition-all duration-100 h-28 border border-white/10';
-                btn.addEventListener('click', () => speak(sound.text));
-                btn.innerHTML =
-                    '<span class="text-3xl mb-1.5 block">' + sound.emoji + '</span>' +
-                    '<span class="text-[11px] font-bold leading-tight block text-white/95">' + escapeHtml(sound.title) + '</span>';
-                grid.appendChild(btn);
-            });
-
-            // --- Admin list inside simulator ---
-            const adminList = document.getElementById('sim-admin-list');
-            adminList.innerHTML = '';
-
-            currentSounds.forEach(sound => {
-                const item = document.createElement('div');
-                item.className = 'flex justify-between items-center bg-[#16181f] p-2 rounded-lg border border-slate-800';
-                item.innerHTML =
-                    '<div class="flex items-center space-x-2">' +
-                        '<span class="text-lg">' + sound.emoji + '</span>' +
-                        '<div class="text-left">' +
-                            '<p class="text-[10px] font-bold text-white">' + escapeHtml(sound.title) + '</p>' +
-                            '<p class="text-[8px] text-slate-500 truncate max-w-[120px]">' + escapeHtml(sound.text) + '</p>' +
-                        '</div>' +
-                    '</div>' +
-                    '<button data-id="' + sound.id + '" class="delete-sim-btn bg-red-500/10 hover:bg-red-500/20 text-red-400 px-2 py-1 rounded text-[9px] font-bold">Sil</button>';
+        function renderButtons() {
+            var container = document.getElementById("buttons-container");
+            var adminList = document.getElementById("admin-list");
+            container.innerHTML = "";
+            adminList.innerHTML = "";
+            sounds.forEach(function(sound) {
+                var btn = document.createElement("button");
+                btn.className = "bg-gradient-to-br " + sound.color + " p-5 rounded-2xl flex flex-col items-center justify-center text-center shadow-lg active:scale-95 transition duration-150 h-36 border border-white/10";
+                btn.onclick = function() { playTTS(sound.text); };
+                btn.innerHTML = "<span class=\"text-4xl mb-3 block\">" + sound.emoji + "</span><span class=\"text-sm font-semibold tracking-wide block leading-snug\">" + escHtml(sound.title) + "</span>";
+                container.appendChild(btn);
+                var item = document.createElement("div");
+                item.className = "flex justify-between items-center bg-[#16181f] p-3 rounded-xl border border-gray-800";
+                item.innerHTML = "<div class=\"flex items-center space-x-3 text-left\"><span class=\"text-xl\">" + sound.emoji + "</span><div><p class=\"text-sm font-semibold text-white\">" + escHtml(sound.title) + "</p><p class=\"text-xs text-gray-500 truncate max-w-[180px]\">" + escHtml(sound.text) + "</p></div></div><button class=\"delete-btn bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold\" data-id=\"" + sound.id + "\">Sil</button>";
                 adminList.appendChild(item);
             });
-
-            // Attach delete handlers
-            adminList.querySelectorAll('.delete-sim-btn').forEach(btn => {
-                btn.addEventListener('click', () => deleteSound(btn.dataset.id));
+            adminList.querySelectorAll(".delete-btn").forEach(function(b) {
+                b.addEventListener("click", function() { deleteSound(b.dataset.id); });
             });
-
-            // Update code output
-            updateCodeOutput();
         }
 
-        // ============================================================
-        // ADD / DELETE
-        // ============================================================
-        function handleAddButton() {
-            const emoji = document.getElementById('input-emoji').value.trim() || '📣';
-            const title = document.getElementById('input-title').value.trim();
-            const text  = document.getElementById('input-text').value.trim();
-            const color = document.getElementById('input-color').value;
-
-            if (!title || !text) {
-                showToast('Lütfen buton başlığını ve söylenecek sözü doldurun!', 'red');
-                return;
-            }
-
-            currentSounds.push({ id: Date.now().toString(), emoji, title, text, color });
-            renderSimulator();
-
-            document.getElementById('input-title').value = '';
-            document.getElementById('input-text').value  = '';
-            document.getElementById('input-emoji').value = '💖';
-
-            showToast('Harika! Yeni ses butonun simülatöre eklendi.', 'emerald');
+        function playTTS(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            var utt = new SpeechSynthesisUtterance(text);
+            utt.lang = "tr-TR"; utt.rate = 1.0; utt.pitch = 1.15;
+            var trVoice = window.speechSynthesis.getVoices().find(function(v) { return v.lang && v.lang.startsWith("tr"); });
+            if (trVoice) utt.voice = trVoice;
+            var wave = document.getElementById("audio-wave");
+            utt.onstart = function() { wave.classList.remove("hidden"); wave.classList.add("flex"); };
+            utt.onend   = function() { wave.classList.add("hidden"); wave.classList.remove("flex"); };
+            utt.onerror = function() { wave.classList.add("hidden"); wave.classList.remove("flex"); };
+            window.speechSynthesis.speak(utt);
         }
 
-        function addPreset(emoji, title, text, color) {
-            currentSounds.push({ id: Date.now().toString(), emoji, title, text, color });
-            renderSimulator();
-            showToast('"' + title + '" şablonu başarıyla eklendi!', 'emerald');
+        function addNewSound() {
+            var emoji = document.getElementById("new-emoji").value.trim() || "📣";
+            var title = document.getElementById("new-title").value.trim();
+            var text  = document.getElementById("new-text").value.trim();
+            var color = document.getElementById("new-color").value;
+            if (!title || !text) { alert("Lutfen tum alanlari doldurun!"); return; }
+            sounds.push({ id: Date.now().toString(), emoji: emoji, title: title, text: text, color: color });
+            save(); renderButtons();
+            document.getElementById("new-emoji").value = "";
+            document.getElementById("new-title").value = "";
+            document.getElementById("new-text").value  = "";
         }
 
         function deleteSound(id) {
-            currentSounds = currentSounds.filter(s => s.id !== id);
-            renderSimulator();
-            showToast('Buton simülatörden silindi.', 'red');
+            sounds = sounds.filter(function(s) { return s.id !== id; });
+            save(); renderButtons();
         }
 
-        // ============================================================
-        // SIMULATOR ADMIN PANEL TOGGLE
-        // ============================================================
-        let isSimAdminOpen = false;
-        function toggleSimAdmin() {
-            const modal = document.getElementById('sim-admin-modal');
-            isSimAdminOpen = !isSimAdminOpen;
-            modal.classList.toggle('translate-y-full', !isSimAdminOpen);
+        var isAdminOpen = false;
+        function toggleAdminPanel() {
+            var modal = document.getElementById("admin-modal");
+            isAdminOpen = !isAdminOpen;
+            modal.classList.toggle("translate-y-full", !isAdminOpen);
         }
-
-        // ============================================================
-        // TAB SWITCHING
-        // ============================================================
-        const TABS     = ['tab-editor', 'tab-code', 'tab-deploy'];
-        const TAB_BTNS = ['btn-tab-editor', 'btn-tab-code', 'btn-tab-deploy'];
-        const ACTIVE_CLS   = 'flex-1 py-3 text-sm font-semibold rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white transition-all shadow-lg shadow-pink-500/10';
-        const INACTIVE_CLS = 'flex-1 py-3 text-sm font-semibold rounded-xl text-slate-400 hover:text-white transition-all';
-
-        function switchTab(tabId) {
-            TABS.forEach(id => document.getElementById(id).classList.add('hidden'));
-            TAB_BTNS.forEach(id => document.getElementById(id).className = INACTIVE_CLS);
-            document.getElementById(tabId).classList.remove('hidden');
-            document.getElementById('btn-' + tabId).className = ACTIVE_CLS;
-
-            // Update code whenever user opens that tab
-            if (tabId === 'tab-code') updateCodeOutput();
-        }
-
-        // ============================================================
-        // TOAST NOTIFICATIONS
-        // ============================================================
-        let toastTimer = null;
-        function showToast(msg, type) {
-            const toast = document.getElementById('custom-toast');
-            document.getElementById('toast-message').textContent = msg;
-            toast.className = type === 'red'
-                ? 'bg-red-500/10 border border-red-500/20 text-red-400 p-3.5 rounded-xl text-xs flex items-center justify-between'
-                : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-3.5 rounded-xl text-xs flex items-center justify-between';
-            toast.classList.remove('hidden');
-            if (toastTimer) clearTimeout(toastTimer);
-            toastTimer = setTimeout(hideToast, 3000);
-        }
-        function hideToast() {
-            document.getElementById('custom-toast').classList.add('hidden');
-        }
-
-        // ============================================================
-        // UTILITY: escape HTML to prevent XSS in innerHTML
-        // ============================================================
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
-
-        // ============================================================
-        // CODE GENERATOR
-        // Onemli: Script kapama etiketi hic bir yerde dogrudan yazilmamali.
-        // Bunun yerine dizi icinde bolunmus sekilde yazilip runtime'da birlestirilir.
-        // ============================================================
-        function updateCodeOutput() {
-            const soundsJSON = JSON.stringify(currentSounds, null, 4);
-            const scriptClose = '<' + '/script>'; // HTML parser icin guvenli yol
-            // and inner JS template literals are written as plain string concat.
-            const html = [
-'<!DOCTYPE html>',
-'<html lang="tr">',
-'<head>',
-'    <meta charset="UTF-8">',
-'    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">',
-'    <title>Ses Kutusu</title>',
-'    <meta name="apple-mobile-web-app-capable" content="yes">',
-'    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
-'    <meta name="apple-mobile-web-app-title" content="Ses Kutusu">',
-'    <script src="https://cdn.tailwindcss.com">' + scriptClose,
-'    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">',
-'    <style>',
-'        body {',
-'            font-family: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, sans-serif;',
-'            -webkit-tap-highlight-color: transparent;',
-'            user-select: none;',
-'            background-color: #0d0e12;',
-'        }',
-'        html, body { position: fixed; overflow: hidden; width: 100%; height: 100%; }',
-'        .scrollable { overflow-y: auto; height: calc(100% - 140px); -webkit-overflow-scrolling: touch; }',
-'        @keyframes pulse-wave { 0%, 100% { transform: scaleY(0.3); } 50% { transform: scaleY(1); } }',
-'        .wave-bar { animation: pulse-wave 1.2s ease-in-out infinite; }',
-'        .wave-bar:nth-child(2) { animation-delay: 0.15s; }',
-'        .wave-bar:nth-child(3) { animation-delay: 0.30s; }',
-'        .wave-bar:nth-child(4) { animation-delay: 0.45s; }',
-'        .wave-bar:nth-child(5) { animation-delay: 0.60s; }',
-'    </style>',
-'</head>',
-'<body class="text-white flex flex-col justify-between h-full">',
-'',
-'    <!-- HEADER -->',
-'    <div class="px-6 pt-12 pb-4 border-b border-gray-800 bg-[#16181f]/80 backdrop-blur-md shrink-0">',
-'        <div class="flex justify-between items-center">',
-'            <div>',
-'                <p class="text-xs text-gray-400 uppercase tracking-widest font-semibold">Sevgilime Ozel</p>',
-'                <h1 class="text-3xl font-bold tracking-tight bg-gradient-to-r from-pink-500 to-rose-400 bg-clip-text text-transparent">Ses Kutusu ❤️</h1>',
-'            </div>',
-'            <div id="audio-wave" class="hidden items-end space-x-1 h-8">',
-'                <div class="w-1 h-6 bg-rose-500 rounded-full wave-bar"></div>',
-'                <div class="w-1 h-8 bg-rose-400 rounded-full wave-bar"></div>',
-'                <div class="w-1.5 h-10 bg-pink-500 rounded-full wave-bar"></div>',
-'                <div class="w-1 h-8 bg-rose-400 rounded-full wave-bar"></div>',
-'                <div class="w-1 h-6 bg-rose-500 rounded-full wave-bar"></div>',
-'            </div>',
-'        </div>',
-'    </div>',
-'',
-'    <!-- SES KARTLARI -->',
-'    <div class="scrollable px-4 py-6 grid grid-cols-2 gap-4" id="buttons-container"></div>',
-'',
-'    <!-- ALT BAR -->',
-'    <div class="px-6 py-4 bg-[#16181f] border-t border-gray-800 flex justify-between items-center z-10 shrink-0">',
-'        <div class="text-xs text-gray-500">Yapimci: <span class="font-semibold text-gray-400">Efe</span></div>',
-'        <button onclick="toggleAdminPanel()" class="w-10 h-10 bg-gray-800 hover:bg-gray-700 active:scale-90 transition rounded-full flex items-center justify-center">',
-'            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">',
-'                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.01 12a4.237 4.237 0 000-8.474 4.237 4.237 0 000 8.474zM2.105 20.316A9.895 9.895 0 0112 10.421a9.895 9.895 0 019.895 9.895" />',
-'            </svg>',
-'        </button>',
-'    </div>',
-'',
-'    <!-- ADMIN MODAL -->',
-'    <div id="admin-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md flex items-end justify-center transition-all duration-300 translate-y-full z-50">',
-'        <div class="bg-[#1c1e27] w-full rounded-t-3xl p-6 max-h-[85vh] overflow-y-auto pb-12">',
-'            <div class="flex justify-between items-center mb-6">',
-'                <h2 class="text-xl font-bold text-pink-500">Sesleri Duzenle</h2>',
-'                <button onclick="toggleAdminPanel()" class="text-gray-400 hover:text-white font-medium">Kapat</button>',
-'            </div>',
-'            <div class="bg-[#252836] p-4 rounded-2xl mb-6 space-y-3">',
-'                <h3 class="text-sm font-semibold text-gray-300">Yeni Ses Karti Ekle</h3>',
-'                <div class="grid grid-cols-4 gap-2">',
-'                    <input id="new-emoji" type="text" placeholder="Emoji" class="col-span-1 bg-[#16181f] border border-gray-700 rounded-xl p-3 text-center text-xl focus:outline-none focus:border-pink-500">',
-'                    <input id="new-title" type="text" placeholder="Buton Basligi" class="col-span-3 bg-[#16181f] border border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:border-pink-500">',
-'                </div>',
-'                <input id="new-text" type="text" placeholder="Soylenecek Soz" class="w-full bg-[#16181f] border border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:border-pink-500">',
-'                <select id="new-color" class="w-full bg-[#16181f] border border-gray-700 rounded-xl p-3 text-sm focus:outline-none focus:border-pink-500">',
-'                    <option value="from-pink-500 to-rose-500">Ask Pembesi</option>',
-'                    <option value="from-violet-600 to-indigo-600">Gece Mavisi</option>',
-'                    <option value="from-amber-500 to-orange-500">Enerjik Turuncu</option>',
-'                    <option value="from-emerald-500 to-teal-500">Huzur Yesili</option>',
-'                    <option value="from-red-600 to-rose-700">Canli Kirmizi</option>',
-'                </select>',
-'                <button onclick="addNewSound()" class="w-full bg-pink-500 hover:bg-pink-600 active:scale-95 transition py-3 rounded-xl font-semibold text-sm">Listeye Ekle</button>',
-'            </div>',
-'            <h3 class="text-sm font-semibold mb-3 text-gray-300">Mevcut Butonlari Sil</h3>',
-'            <div id="admin-list" class="space-y-2"></div>',
-'        </div>',
-'    </div>',
-'',
-'    <script>',
-'        var defaultSounds = ' + soundsJSON + ';',
-'        var sounds = [];',
-'',
-'        window.onload = function() {',
-'            try {',
-'                var saved = localStorage.getItem("ses_kutusu_sounds");',
-'                sounds = saved ? JSON.parse(saved) : defaultSounds.slice();',
-'            } catch(e) {',
-'                sounds = defaultSounds.slice();',
-'            }',
-'            renderButtons();',
-'            if (window.speechSynthesis) {',
-'                window.speechSynthesis.getVoices();',
-'                window.speechSynthesis.onvoiceschanged = function() { window.speechSynthesis.getVoices(); };',
-'            }',
-'        };',
-'',
-'        function save() { localStorage.setItem("ses_kutusu_sounds", JSON.stringify(sounds)); }',
-'',
-'        function escHtml(s) {',
-'            return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");',
-'        }',
-'',
-'        function renderButtons() {',
-'            var container = document.getElementById("buttons-container");',
-'            var adminList = document.getElementById("admin-list");',
-'            container.innerHTML = "";',
-'            adminList.innerHTML = "";',
-'            sounds.forEach(function(sound) {',
-'                var btn = document.createElement("button");',
-'                btn.className = "bg-gradient-to-br " + sound.color + " p-5 rounded-2xl flex flex-col items-center justify-center text-center shadow-lg active:scale-95 transition duration-150 h-36 border border-white/10";',
-'                btn.onclick = function() { playTTS(sound.text); };',
-'                btn.innerHTML = "<span class=\\"text-4xl mb-3 block\\">" + sound.emoji + "</span><span class=\\"text-sm font-semibold tracking-wide block leading-snug\\">" + escHtml(sound.title) + "</span>";',
-'                container.appendChild(btn);',
-'                var item = document.createElement("div");',
-'                item.className = "flex justify-between items-center bg-[#16181f] p-3 rounded-xl border border-gray-800";',
-'                item.innerHTML = "<div class=\\"flex items-center space-x-3 text-left\\"><span class=\\"text-xl\\">" + sound.emoji + "</span><div><p class=\\"text-sm font-semibold text-white\\">" + escHtml(sound.title) + "</p><p class=\\"text-xs text-gray-500 truncate max-w-[180px]\\">" + escHtml(sound.text) + "</p></div></div><button class=\\"delete-btn bg-red-500/10 hover:bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold\\" data-id=\\"" + sound.id + "\\">Sil</button>";',
-'                adminList.appendChild(item);',
-'            });',
-'            adminList.querySelectorAll(".delete-btn").forEach(function(b) {',
-'                b.addEventListener("click", function() { deleteSound(b.dataset.id); });',
-'            });',
-'        }',
-'',
-'        function playTTS(text) {',
-'            if (!window.speechSynthesis) return;',
-'            window.speechSynthesis.cancel();',
-'            var utt = new SpeechSynthesisUtterance(text);',
-'            utt.lang = "tr-TR"; utt.rate = 1.0; utt.pitch = 1.15;',
-'            var trVoice = window.speechSynthesis.getVoices().find(function(v) { return v.lang && v.lang.startsWith("tr"); });',
-'            if (trVoice) utt.voice = trVoice;',
-'            var wave = document.getElementById("audio-wave");',
-'            utt.onstart = function() { wave.classList.remove("hidden"); wave.classList.add("flex"); };',
-'            utt.onend   = function() { wave.classList.add("hidden"); wave.classList.remove("flex"); };',
-'            utt.onerror = function() { wave.classList.add("hidden"); wave.classList.remove("flex"); };',
-'            window.speechSynthesis.speak(utt);',
-'        }',
-'',
-'        function addNewSound() {',
-'            var emoji = document.getElementById("new-emoji").value.trim() || "📣";',
-'            var title = document.getElementById("new-title").value.trim();',
-'            var text  = document.getElementById("new-text").value.trim();',
-'            var color = document.getElementById("new-color").value;',
-'            if (!title || !text) { alert("Lutfen tum alanlari doldurun!"); return; }',
-'            sounds.push({ id: Date.now().toString(), emoji: emoji, title: title, text: text, color: color });',
-'            save(); renderButtons();',
-'            document.getElementById("new-emoji").value = "";',
-'            document.getElementById("new-title").value = "";',
-'            document.getElementById("new-text").value  = "";',
-'        }',
-'',
-'        function deleteSound(id) {',
-'            sounds = sounds.filter(function(s) { return s.id !== id; });',
-'            save(); renderButtons();',
-'        }',
-'',
-'        var isAdminOpen = false;',
-'        function toggleAdminPanel() {',
-'            var modal = document.getElementById("admin-modal");',
-'            isAdminOpen = !isAdminOpen;',
-'            modal.classList.toggle("translate-y-full", !isAdminOpen);',
-'        }',
-'    ' + scriptClose,
-'</body>',
-'</html>'
-            ].join('\n');
-
-            document.getElementById('code-output').value = html;
-        }
-
-        // ============================================================
-        // COPY CODE
-        // ============================================================
-        async function copyGeneratedCode() {
-            const code = document.getElementById('code-output').value;
-            try {
-                await navigator.clipboard.writeText(code);
-                showToast('Kod panoya kopyalandı! 📋 Şimdi "Nasıl Yüklenir?" sekmesine bak.', 'emerald');
-                switchTab('tab-deploy');
-            } catch (err) {
-                // Fallback for older browsers
-                const ta = document.getElementById('code-output');
-                ta.select();
-                ta.setSelectionRange(0, 99999);
-                document.execCommand('copy');
-                showToast('Kod kopyalandı! 📋', 'emerald');
-                switchTab('tab-deploy');
-            }
-        }
-
-        // ============================================================
-        // INIT
-        // ============================================================
-        renderSimulator();
     </script>
 </body>
 </html>
